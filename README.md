@@ -1,38 +1,18 @@
 # SuggestAPI + Claude Commerce Agents
 
-Drop-in [`StorefrontBackend`](https://github.com/anthropics/commerce-agents/blob/main/shopping-agent/core/shopping_agent/backend.py) for [Anthropic's commerce agents](https://github.com/anthropics/commerce-agents).
+A starter [`StorefrontBackend`](https://github.com/anthropics/commerce-agents/blob/main/shopping-agent/core/shopping_agent/backend.py) that points [Anthropic's commerce agents](https://github.com/anthropics/commerce-agents) at SuggestAPI for product discovery.
 
-Claude Commerce already has `search_products` and `get_product_details`. This repo implements those methods over the [SuggestAPI Knowledge Gateway](https://agent.suggestapi.com). SuggestAPI retrieves and ranks products from the merchant's existing search stack. Claude compares, presents, and fills a session cart.
+Claude Commerce already calls `search_products` and `get_product_details`. This adapter implements those methods: SuggestAPI returns ranked catalog results, and Claude compares, presents, and fills the cart.
 
-Do not add a custom Messages API autocomplete tool. That is not Claude Commerce.
+Checkout stays on the merchant storefront. SuggestAPI does not take payment.
 
-```
-Shopper
-  → Claude Commerce shopping agent
-  → search_products / get_product_details
-  → SuggestAPIStorefront (this repo)
-  → POST /oks/{tenant}/catalog/search
-  → ranked products
-  → Claude
-```
-
-Checkout is a merchant handoff (`POST /oks/{tenant}/checkout_sessions` → `continue_url`). This adapter does not capture payment.
-
-## What this is not
-
-- Not a hosted Claude Commerce agent
-- Not `https://api.suggestapi.com/v1/predict`
-- Not a replacement for Anthropic's shopping-agent runtime
-
-## Check the mapper
-
-No Anthropic packages required:
+## Quick start
 
 ```bash
 python3 check.py
 ```
 
-## Wire into Anthropic's retail demo
+Then clone Anthropic's reference shopping agent and swap the mock catalog for this backend:
 
 ```bash
 git clone https://github.com/anthropics/commerce-agents.git
@@ -41,31 +21,27 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Put this repo on `PYTHONPATH` (or copy `map_product.py` and `suggestapi_backend.py` next to the retail API). Replace `MockRetail` with:
+Put this repo on `PYTHONPATH`, or copy `map_product.py` and `suggestapi_backend.py` next to the retail API. Replace `MockRetail` with:
 
 ```python
 from suggestapi_backend import SuggestAPIStorefront
 
-backend = SuggestAPIStorefront(tenant="demo.suggestapi.com")
+backend = SuggestAPIStorefront(tenant="your-store.example.com")
 ```
 
 | Variable | Purpose |
 |---|---|
-| `SUGGESTAPI_TENANT` | Merchant domain, e.g. `demo.suggestapi.com` |
-| `SUGGESTAPI_BASE_URL` | Gateway origin (default `https://agent.suggestapi.com`) |
-| `SUGGESTAPI_API_KEY` | `x-api-key` when the gateway requires it |
-| `ANTHROPIC_API_KEY` | Required by the Anthropic demo host, not by `check.py` |
+| `SUGGESTAPI_TENANT` | Merchant domain whose catalog SuggestAPI should search |
+| `SUGGESTAPI_BASE_URL` | SuggestAPI agent API (default `https://agent.suggestapi.com`) |
+| `SUGGESTAPI_API_KEY` | Optional `x-api-key` if your SuggestAPI project requires it |
+| `ANTHROPIC_API_KEY` | Required by Anthropic's demo host, not by `check.py` |
 
-A shopping pilot only needs search and product details. Cart methods here are in-memory for the session; orders are empty; policies come from `GET /oks/{tenant}/policies`.
+Copy `.env.example` and fill in your values.
 
-## Gateway calls
+A first integration only needs search and product details. The cart in this starter is in-memory for the session so you can try the shopping agent without wiring a storefront cart.
 
-- Search: `POST https://agent.suggestapi.com/oks/{tenant}/catalog/search`
-- Details: `GET https://agent.suggestapi.com/oks/{tenant}/products/{id}`
-- Checkout handoff: `POST https://agent.suggestapi.com/oks/{tenant}/checkout_sessions`
-
-## References
+## Docs
 
 - [Anatomy of effective commerce agents](https://claude.com/blog/the-anatomy-of-effective-commerce-agents)
 - [Commerce agents use-case guide](https://platform.claude.com/docs/en/about-claude/use-case-guides/commerce-agents)
-- [SuggestAPI Knowledge Gateway](https://github.com/suggestapi/suggestapi_agent)
+- [SuggestAPI](https://suggestapi.com)

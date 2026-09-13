@@ -2,11 +2,7 @@
 
 Drop this class into anthropics/commerce-agents in place of the retail mock
 catalog. SuggestAPI owns retrieval and ranking; Claude owns comparison,
-presentation, and cart reasoning.
-
-Cart, orders, and fulfillment are session-local stubs: SuggestAPI does not
-execute checkout. ``checkout_handoff`` opens the merchant continue_url from an
-ACP checkout session when the gateway can build one.
+presentation, and cart reasoning. Checkout is a merchant storefront handoff.
 """
 
 from __future__ import annotations

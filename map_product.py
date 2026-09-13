@@ -1,8 +1,7 @@
-"""Map SuggestAPI UCP/OKS catalog records onto Claude Commerce product dicts.
+"""Map SuggestAPI catalog records onto Claude Commerce product dicts.
 
-The shopping agent ranks nothing: SuggestAPI already ranked the hits. This module
-only translates fields into the StorefrontBackend Product / ProductDetails shape
-from anthropics/commerce-agents (shopping_agent.types).
+SuggestAPI already ranked the hits. This module only translates fields into the
+StorefrontBackend Product / ProductDetails shape from anthropics/commerce-agents.
 """
 
 from __future__ import annotations
@@ -209,7 +208,7 @@ def ucp_to_product(record: dict[str, Any], *, details: bool = False) -> dict[str
 
 
 def oks_document_to_ucp_shape(document: dict[str, Any]) -> dict[str, Any]:
-    """Lift a GET /oks/{tenant}/products/{id} document toward the UCP product shape."""
+    """Normalize a product lookup document to the catalog search product shape."""
     if "price_range" in document and "variants" in document:
         return document
     price = document.get("price") if isinstance(document.get("price"), dict) else {}
@@ -273,7 +272,6 @@ def search_request_body(query: str, filters: dict[str, Any] | None, limit: int) 
         body["filters"] = ucp_filters
     attributes = filters.get("attributes")
     if isinstance(attributes, dict) and attributes:
-        # ponytail: UCP catalog search has no generic attribute filter; fold into query.
         extra = " ".join(f"{key} {value}" for key, value in attributes.items() if value)
         if extra:
             body["query"] = f"{query} {extra}".strip()
