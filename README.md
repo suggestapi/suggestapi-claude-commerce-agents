@@ -36,6 +36,10 @@ Guest mode reads `tests/fixtures.json`. Live catalog:
 SUGGESTAPI_LIVE=1 SUGGESTAPI_TENANT=your-store.example.com python3 demo/server.py
 ```
 
+Public demo on Render (guest catalog, no API keys). Push this repo, then in the dashboard: **New → Web Service**, connect the GitHub repo, language **Docker**, instance **Free**. Or apply the Blueprint from `render.yaml`.
+
+The service listens on Render’s `PORT`. The first request after idle can take about a minute while the free instance wakes up.
+
 ## Wire into Anthropic's retail demo
 
 ```bash

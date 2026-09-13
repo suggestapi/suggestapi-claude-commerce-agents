@@ -22,8 +22,8 @@ from trace import collect, intro, setup, step  # noqa: E402
 
 WEB = Path(__file__).with_name("web")
 FIXTURES = json.loads((ROOT / "tests" / "fixtures.json").read_text())
-HOST = os.environ.get("DEMO_HOST", "127.0.0.1")
-PORT = int(os.environ.get("DEMO_PORT", "8765"))
+HOST = os.environ.get("DEMO_HOST") or ("0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+PORT = int(os.environ.get("PORT") or os.environ.get("DEMO_PORT") or "8765")
 
 
 def build_backend() -> SuggestAPIStorefront:

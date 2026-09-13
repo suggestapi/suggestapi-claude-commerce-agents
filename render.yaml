@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: suggestapi-claude-commerce-agents
+    runtime: docker
+    plan: free
+    healthCheckPath: /
