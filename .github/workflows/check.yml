@@ -16,3 +16,6 @@ jobs:
           python-version: "3.12"
       - name: Map SuggestAPI records onto Claude Commerce products
         run: python3 check.py
+
+      - name: Run shopping-agent harness tests
+        run: python3 tests/test_harness.py

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo · SuggestAPI + Claude Commerce Agents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+        --font: Inter, ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        --bg: #ffffff;
+        --ink: #000000;
+        --muted: #5b6578;
+        --card: #f7fafc;
+        --line: #e2e8f0;
+        --accent: #00b4c8;
+        --accent-ink: #ffffff;
+        --mint: #00f0ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 16px/1.5 var(--font);
+        background: var(--bg);
+        color: var(--ink);
+      }
+      code, pre, .call h2 {
+        font-family: var(--font-mono);
+      }
+      code {
+        font-size: 0.86em;
+        font-weight: 500;
+        background: var(--card);
+        border: 1px solid var(--line);
+        padding: 0.12em 0.35em;
+        border-radius: 0.25rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { display: flex; flex-direction: column; gap: 0.15rem; }
+      header strong { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.02em; }
+      header .brand span { color: var(--muted); font-size: 0.9rem; }
+      #cart-toggle {
+        position: relative;
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        padding: 0.5rem 0.6rem;
+        line-height: 0;
+      }
+      #cart-badge {
+        position: absolute;
+        top: -0.4rem;
+        right: -0.4rem;
+        min-width: 1.15rem;
+        padding: 0.15rem 0.3rem;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font: 11px/1.2 var(--font);
+        text-align: center;
+      }
+      #cart-badge[hidden] { display: none; }
+      #cart-scrim {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgb(28 25 23 / 0.4);
+        z-index: 20;
+      }
+      #cart-scrim.open { display: block; }
+      #cart-tray {
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 21;
+        width: min(22rem, 100%);
+        height: 100%;
+        background: var(--card);
+        border-left: 1px solid var(--line);
+        padding: 1.25rem 1.35rem;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      #cart-tray.open { transform: translateX(0); }
+      #cart-tray h2 { margin: 0; }
+      #cart-tray header {
+        padding: 0;
+        border: 0;
+      }
+      #cart-tray ul { list-style: none; padding: 0; margin: 0; flex: 1; overflow: auto; }
+      .brief {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 1.25rem;
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--card);
+      }
+      .brief h1 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.4rem; }
+      .brief p, .brief ol { margin: 0; color: var(--muted); font-size: 0.95rem; }
+      .brief ol { padding-left: 1.2rem; }
+      .brief strong { color: var(--ink); font-weight: 600; }
+      main {
+        display: grid;
+        grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(18rem, 24rem);
+        min-height: calc(100vh - 12rem);
+      }
+      .chat, .shelf, .tools { padding: 1.25rem 1.5rem; }
+      .chat { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.75rem; }
+      .tools { border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.65rem; min-width: 0; }
+      .log, .calls {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+      }
+      .bubble { padding: 0.65rem 0.75rem; border-radius: 0.6rem; max-width: 100%; }
+      .bubble.user { background: var(--ink); color: var(--accent-ink); margin-left: 1.5rem; }
+      .bubble.pending { background: var(--card); border: 1px dashed var(--accent); margin-right: 1.5rem; color: var(--accent); }
+      .spin::before {
+        content: "";
+        display: inline-block;
+        width: 0.7em;
+        height: 0.7em;
+        margin-right: 0.4em;
+        border: 2px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: -0.15em;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      body.busy .chat button, body.busy .shelf button { pointer-events: none; }
+      .examples { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem; }
+      .examples button {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 0.35rem 0.55rem;
+        font-size: 0.85rem;
+      }
+      button {
+        font: inherit;
+        border: 0;
+        background: var(--accent);
+        color: var(--accent-ink);
+        padding: 0.65rem 0.9rem;
+        cursor: pointer;
+      }
+      button.ghost, a.ghost {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        text-decoration: none;
+        display: inline-block;
+      }
+      .cart-actions { display: flex; flex-direction: column; gap: 0.55rem; }
+      .cart-step { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.4; }
+      #checkout { width: 100%; }
+      #handoff {
+        display: none;
+        text-align: center;
+        background: var(--accent);
+        color: var(--accent-ink);
+        border: 0;
+        padding: 0.65rem 0.9rem;
+      }
+      #handoff.show { display: block; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        gap: 1rem;
+      }
+      article.product, .call {
+        background: var(--card);
+        border: 1px solid var(--line);
+        padding: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+      }
+      .thumb {
+        position: relative;
+        height: 10rem;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .thumb span {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+      article.product img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      article.product.sold-out .thumb { filter: grayscale(1) brightness(0.85); }
+      .badge-sold {
+        align-self: start;
+        background: var(--ink);
+        color: var(--accent-ink);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.45rem;
+      }
+      article.product h2, .shelf h2, .tools h2, #cart-tray h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+      article.product p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+      .price { font-variant-numeric: tabular-nums; }
+      article.product.sold-out button { opacity: 0.45; cursor: not-allowed; }
+      #checkout:disabled { opacity: 0.45; cursor: not-allowed; }
+      .cart li { display: flex; justify-content: space-between; gap: 1rem; margin: 0.35rem 0; }
+      .empty { color: var(--muted); }
+      .call h2 { font-size: 0.82rem; font-weight: 500; }
+      .call .label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .call pre {
+        margin: 0;
+        padding: 0.5rem 0.55rem;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 0.35rem;
+        font-size: 12px;
+        line-height: 1.45;
+        overflow: auto;
+        max-height: 16rem;
+      }
+      @media (max-width: 1100px) {
+        .brief, main { grid-template-columns: 1fr; }
+        .chat { border-right: 0; border-bottom: 1px solid var(--line); min-height: 16rem; }
+        .tools { border-left: 0; border-top: 1px solid var(--line); min-height: 16rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <strong>Demo · SuggestAPI + Claude Commerce Agents</strong>
+        <span>Interactive walkthrough · guest catalog · no Claude API key</span>
+      </div>
+      <button type="button" id="cart-toggle" aria-label="Open cart" aria-expanded="false" aria-controls="cart-tray">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M6 7h15l-1.4 8.2H7.2L6 7z" />
+          <path d="M6 7 5 4H2" />
+          <circle cx="9" cy="19.2" r="1.3" />
+          <circle cx="18" cy="19.2" r="1.3" />
+        </svg>
+        <span id="cart-badge" hidden>0</span>
+      </button>
+    </header>
+    <div id="cart-scrim"></div>
+    <aside id="cart-tray" aria-label="Cart">
+      <header>
+        <h2>Cart</h2>
+        <button type="button" class="ghost" id="cart-close">Close</button>
+      </header>
+      <ul id="cart-lines"><li class="empty">Empty — search, then add a product.</li></ul>
+      <p id="cart-total"></p>
+      <div class="cart-actions">
+        <p class="cart-step" id="checkout-hint">Claude Commerce checkout is a handoff, not a charge. First send the <code>checkout</code> tool.</p>
+        <button type="button" id="checkout" disabled>Send checkout tool</button>
+        <p class="cart-step" id="handoff-hint" hidden>The tool returned a merchant <code>continue_url</code>. Open it to finish on the storefront — no payment in this demo.</p>
+        <a id="handoff" href="/checkout">Continue on merchant storefront</a>
+      </div>
+    </aside>
+    <section class="brief">
+      <div>
+        <h1>What this is</h1>
+        <p>
+          This is a <strong>demo of SuggestAPI + Claude Commerce Agents</strong>.
+          It shows SuggestAPI ranking a catalog for Anthropic’s commerce-agent tools.
+          You act as the shopper; the page runs those tools so you can watch the integration.
+          Claude itself is not in this loop — wire <code>SuggestAPIStorefront</code> into Anthropic’s shopping agent when you want the model.
+        </p>
+      </div>
+      <div>
+        <h1>How to use this demo</h1>
+        <ol>
+          <li>Tap a search (the same queries as the harness tests).</li>
+          <li>Add a ranked product — the cart icon opens a tray.</li>
+          <li>Open the cart, send the checkout tool, then continue on the merchant page. No payment.</li>
+        </ol>
+      </div>
+      <div>
+        <h1>Where the agent calls are</h1>
+        <p>
+          Watch the <strong>tool log</strong> on the right. That is the SuggestAPI + Claude Commerce
+          contract in the open: each <code>request</code> and <code>response</code> for
+          <code>search_products</code>, <code>add_to_cart</code>, and checkout.
+        </p>
+      </div>
+    </section>
+    <main>
+      <section class="chat">
+        <div class="log" id="log">
+          <div class="bubble agent" id="intro">
+            This is a demo of SuggestAPI + Claude Commerce Agents. Pick a query to send <code>search_products</code>.
+            <div class="examples" id="examples">
+              <button type="button" data-example="oak">oak</button>
+              <button type="button" data-example="box">box</button>
+              <button type="button" data-example="featured cellar gift">featured cellar gift</button>
+              <button type="button" data-example="sold out">sold out</button>
+              <button type="button" data-example="Chef">Chef</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="shelf">
+        <h2>Ranked results</h2>
+        <div class="grid" id="grid"><p class="empty">Nothing here until you search.</p></div>
+      </section>
+      <section class="tools">
+        <h2>Claude Commerce tool log</h2>
+        <p class="empty" id="calls-empty">Idle. The next demo action replaces this with one tool request / response.</p>
+        <div class="calls" id="calls"></div>
+      </section>
+    </main>
+    <script>
+      const log = document.getElementById("log");
+      const grid = document.getElementById("grid");
+      const cartLines = document.getElementById("cart-lines");
+      const cartTotal = document.getElementById("cart-total");
+      const checkout = document.getElementById("checkout");
+      const handoff = document.getElementById("handoff");
+      const handoffHint = document.getElementById("handoff-hint");
+      const calls = document.getElementById("calls");
+      const callsEmpty = document.getElementById("calls-empty");
+
+      const cartToggle = document.getElementById("cart-toggle");
+      const cartClose = document.getElementById("cart-close");
+      const cartTray = document.getElementById("cart-tray");
+      const cartScrim = document.getElementById("cart-scrim");
+      const cartBadge = document.getElementById("cart-badge");
+      const intro = document.getElementById("intro");
+      let busy = false;
+
+      function setCartOpen(open) {
+        cartTray.classList.toggle("open", open);
+        cartScrim.classList.toggle("open", open);
+        cartToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+
+      function toolFor(message) {
+        const lower = message.toLowerCase();
+        if (lower.startsWith("add ")) return "add_to_cart";
+        if (lower === "checkout" || lower.startsWith("checkout")) return "checkout";
+        return "search_products";
+      }
+
+      function money(value) {
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value || 0);
+      }
+
+      function addBubble(role, text) {
+        const el = document.createElement("div");
+        el.className = "bubble " + role;
+        el.textContent = text;
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function renderCart(cart) {
+        cartLines.innerHTML = "";
+        const items = (cart && cart.items) || [];
+        const empty = !items.length;
+        checkout.disabled = empty;
+        cartBadge.hidden = empty;
+        cartBadge.textContent = empty ? "0" : String(cart.item_count || items.reduce((n, item) => n + item.quantity, 0));
+        if (empty) {
+          cartLines.innerHTML = '<li class="empty">Empty — search, then add a product.</li>';
+          cartTotal.textContent = "";
+          return;
+        }
+        for (const item of items) {
+          const li = document.createElement("li");
+          li.innerHTML = "<span>" + item.quantity + " × " + item.title + "</span><span>" + money(item.price * item.quantity) + "</span>";
+          cartLines.appendChild(li);
+        }
+        cartTotal.textContent = "Subtotal " + money(cart.subtotal);
+      }
+
+      function renderProducts(products) {
+        grid.innerHTML = "";
+        if (!products || !products.length) {
+          grid.innerHTML = '<p class="empty">No ranked matches.</p>';
+          return;
+        }
+        for (const product of products) {
+          const card = document.createElement("article");
+          card.className = "product" + (product.in_stock ? "" : " sold-out");
+          const thumb = document.createElement("div");
+          thumb.className = "thumb";
+          const fallback = document.createElement("span");
+          fallback.textContent = (product.title || "?").slice(0, 1);
+          thumb.appendChild(fallback);
+          if (product.image_url) {
+            const img = document.createElement("img");
+            img.alt = product.title || "";
+            img.src = product.image_url;
+            img.addEventListener("error", () => img.remove());
+            thumb.appendChild(img);
+          }
+          card.appendChild(thumb);
+          if (!product.in_stock) {
+            const badge = document.createElement("div");
+            badge.className = "badge-sold";
+            badge.textContent = "Sold out";
+            card.appendChild(badge);
+          }
+          const title = document.createElement("h2");
+          title.textContent = product.title;
+          card.appendChild(title);
+          const price = document.createElement("p");
+          price.className = "price";
+          price.textContent = money(product.price) + (product.in_stock ? "" : " · not for sale");
+          card.appendChild(price);
+          const desc = document.createElement("p");
+          desc.textContent = product.short_description || "";
+          card.appendChild(desc);
+          const add = document.createElement("button");
+          add.type = "button";
+          if (product.in_stock) {
+            add.setAttribute("data-add", product.product_id);
+            add.textContent = "Add to cart";
+          } else {
+            add.disabled = true;
+            add.textContent = "Sold out";
+          }
+          card.appendChild(add);
+          grid.appendChild(card);
+        }
+      }
+
+      function resetTurn(message) {
+        const tool = toolFor(message);
+        while (log.lastChild && log.lastChild !== intro) log.removeChild(log.lastChild);
+        addBubble("user", message);
+        const pending = document.createElement("div");
+        pending.className = "bubble pending spin";
+        pending.textContent = "Sending " + tool + " request…";
+        log.appendChild(pending);
+        log.scrollTop = log.scrollHeight;
+        calls.innerHTML = "";
+        callsEmpty.style.display = "none";
+        const card = document.createElement("article");
+        card.className = "call";
+        card.innerHTML = "<h2>" + tool + "</h2><div class=\"label\">request</div><p class=\"empty spin\">in flight</p>";
+        calls.appendChild(card);
+        showHandoff(null);
+        if (tool === "search_products") {
+          grid.innerHTML = '<p class="empty spin">Sending search_products…</p>';
+        }
+      }
+
+      function renderCalls(entries) {
+        calls.innerHTML = "";
+        if (!entries || !entries.length) {
+          callsEmpty.style.display = "";
+          return;
+        }
+        callsEmpty.style.display = "none";
+        let card = null;
+        for (const entry of entries) {
+          const payload = entry.payload;
+          if (entry.kind === "request") {
+            card = document.createElement("article");
+            card.className = "call";
+            const title = document.createElement("h2");
+            title.textContent = (payload && payload.tool) || "tool";
+            card.appendChild(title);
+            const reqLabel = document.createElement("div");
+            reqLabel.className = "label";
+            reqLabel.textContent = "request";
+            const req = document.createElement("pre");
+            req.textContent = JSON.stringify(payload, null, 2);
+            card.appendChild(reqLabel);
+            card.appendChild(req);
+            calls.appendChild(card);
+          } else if (card) {
+            const resLabel = document.createElement("div");
+            resLabel.className = "label";
+            resLabel.textContent = "response";
+            const res = document.createElement("pre");
+            res.textContent = JSON.stringify(payload, null, 2);
+            card.appendChild(resLabel);
+            card.appendChild(res);
+            card = null;
+          }
+        }
+        calls.scrollTop = calls.scrollHeight;
+      }
+
+      function showHandoff(url) {
+        if (!url) {
+          handoff.classList.remove("show");
+          handoffHint.hidden = true;
+          checkout.classList.remove("ghost");
+          checkout.textContent = "Send checkout tool";
+          return;
+        }
+        handoff.href = url;
+        handoff.classList.add("show");
+        handoffHint.hidden = false;
+        checkout.classList.add("ghost");
+        checkout.textContent = "Send checkout tool again";
+      }
+
+      async function turn(message) {
+        if (busy) return;
+        busy = true;
+        document.body.classList.add("busy");
+        resetTurn(message);
+        const started = Date.now();
+        try {
+          const response = await fetch("/api/turn", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ message }),
+          });
+          const result = await response.json();
+          const wait = 400 - (Date.now() - started);
+          if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+          const pending = log.querySelector(".pending");
+          if (pending) pending.remove();
+          addBubble("agent", result.reply);
+          if (toolFor(message) === "search_products") renderProducts(result.products);
+          else if (result.products && result.products.length) renderProducts(result.products);
+          renderCart(result.cart);
+          renderCalls(result.calls);
+          if (result.action === "add_to_cart" && !result.error) setCartOpen(true);
+          const url = result.handoffs && result.handoffs[0] && result.handoffs[0].url;
+          showHandoff(url);
+          return result;
+        } catch (error) {
+          const stuck = log.querySelector(".pending");
+          if (stuck) stuck.remove();
+          addBubble("agent", "Request failed.");
+          callsEmpty.style.display = "";
+          calls.innerHTML = "";
+        } finally {
+          busy = false;
+          document.body.classList.remove("busy");
+        }
+      }
+
+      document.getElementById("examples").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-example]");
+        if (!button) return;
+        await turn(button.getAttribute("data-example"));
+      });
+
+      grid.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-add]");
+        if (!button) return;
+        await turn("add " + button.getAttribute("data-add"));
+      });
+
+      checkout.addEventListener("click", async () => {
+        if (checkout.disabled) return;
+        await turn("checkout");
+      });
+
+      cartToggle.addEventListener("click", () => setCartOpen(!cartTray.classList.contains("open")));
+      cartClose.addEventListener("click", () => setCartOpen(false));
+      cartScrim.addEventListener("click", () => setCartOpen(false));
+
+      fetch("/api/state")
+        .then((response) => response.json())
+        .then((state) => renderCart(state.cart));
+    </script>
+  </body>
+</html>

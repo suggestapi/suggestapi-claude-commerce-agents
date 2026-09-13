@@ -1,0 +1,124 @@
+{
+  "tenant": "demo.suggestapi.com",
+  "checkout_continue": "/checkout",
+  "policies": [
+    {
+      "id": "policy_shipping",
+      "type": "policy",
+      "title": "Shipping Policy",
+      "summary": "Delivery windows and shipping constraints.",
+      "description": "Orders ship Monday through Thursday. Signature may be required on delivery."
+    }
+  ],
+  "products": [
+    {
+      "id": "sku_oak_case",
+      "title": "Reserve Oak Case",
+      "description": {
+        "plain": "A six-bottle curated case designed for rich food pairings and concierge-style recommendations."
+      },
+      "url": "https://demo.suggestapi.com/products/reserve-oak-case",
+      "categories": [{ "value": "mixed-case", "taxonomy": "merchant" }],
+      "price_range": {
+        "min": { "amount": 18900, "currency": "USD" },
+        "max": { "amount": 18900, "currency": "USD" }
+      },
+      "media": [
+        {
+          "type": "image",
+          "url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80",
+          "alt_text": "Reserve Oak Case"
+        }
+      ],
+      "variants": [
+        {
+          "id": "sku_oak_case",
+          "title": "Reserve Oak Case",
+          "price": { "amount": 18900, "currency": "USD" },
+          "availability": { "available": true }
+        }
+      ],
+      "tags": ["giftable", "featured"],
+      "metadata": {
+        "availability": "in_stock",
+        "vendor": "SuggestAPI Cellars",
+        "product_type": "wine_case"
+      }
+    },
+    {
+      "id": "sku_pairing_box",
+      "title": "Chef Pairing Box",
+      "description": {
+        "plain": "A recommendation-friendly bundle with pairing notes and tasting content."
+      },
+      "url": "https://demo.suggestapi.com/products/chef-pairing-box",
+      "categories": [{ "value": "bundle", "taxonomy": "merchant" }],
+      "price_range": {
+        "min": { "amount": 12400, "currency": "USD" },
+        "max": { "amount": 12400, "currency": "USD" }
+      },
+      "media": [
+        {
+          "type": "image",
+          "url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
+          "alt_text": "Chef Pairing Box"
+        }
+      ],
+      "variants": [
+        {
+          "id": "sku_pairing_box",
+          "title": "Chef Pairing Box",
+          "price": { "amount": 12400, "currency": "USD" },
+          "availability": { "available": true }
+        }
+      ],
+      "tags": ["pairing", "featured"],
+      "metadata": {
+        "availability": "in_stock",
+        "vendor": "SuggestAPI Cellars",
+        "product_type": "bundle"
+      }
+    },
+    {
+      "id": "sku_sold_out",
+      "title": "Library Vintage",
+      "description": { "plain": "Held for allocation; currently out of stock." },
+      "url": "https://demo.suggestapi.com/products/library-vintage",
+      "categories": [{ "value": "library", "taxonomy": "merchant" }],
+      "price_range": {
+        "min": { "amount": 32000, "currency": "USD" },
+        "max": { "amount": 32000, "currency": "USD" }
+      },
+      "media": [
+        {
+          "type": "image",
+          "url": "https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?auto=format&fit=crop&w=800&q=80",
+          "alt_text": "Library Vintage"
+        }
+      ],
+      "variants": [
+        {
+          "id": "sku_sold_out",
+          "title": "Library Vintage",
+          "price": { "amount": 32000, "currency": "USD" },
+          "availability": { "available": false }
+        }
+      ],
+      "tags": [],
+      "metadata": { "availability": "out_of_stock", "vendor": "SuggestAPI Cellars" }
+    }
+  ],
+  "lookups": {
+    "sku_oak_case": {
+      "id": "sku_oak_case",
+      "title": "Reserve Oak Case",
+      "summary": "Premium mixed case for cellar recommendations and gifting.",
+      "description": "A six-bottle curated case designed for rich food pairings and concierge-style recommendations.",
+      "url": "https://demo.suggestapi.com/products/reserve-oak-case",
+      "image": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80",
+      "price": { "amount": 189, "currency": "USD" },
+      "availability": "in_stock",
+      "attributes": { "vendor": "SuggestAPI Cellars", "category": "mixed-case" }
+    }
+  }
+}

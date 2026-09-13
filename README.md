@@ -6,13 +6,37 @@ Claude Commerce already calls `search_products` and `get_product_details`. This 
 
 Checkout stays on the merchant storefront. SuggestAPI does not take payment.
 
-## Quick start
+![Demo of SuggestAPI + Claude Commerce Agents](demo/shopper.png)
+
+## Run the shopper
+
+Python 3.11+. No extra packages, no API keys.
 
 ```bash
-python3 check.py
+python3 tests/test_harness.py
 ```
 
-Then clone Anthropic's reference shopping agent and swap the mock catalog for this backend:
+The test run prints each Claude Commerce tool (`search_products`, `add_to_cart`, `checkout_handoff`) and the ranked products, so you can see the loop before opening a browser.
+
+```bash
+python3 demo/server.py
+```
+
+Open http://127.0.0.1:8765 (uses 8766+ if that port is taken)
+
+1. Tap a chat example (`oak`, `box`, `featured cellar gift`, `sold out`, `Chef`) — same queries as `tests/test_harness.py`
+2. **Add to cart** on a result
+3. **Checkout on merchant storefront** — the tool log on the right shows `request` / `response`, then open the merchant handoff (no payment)
+
+This page is a **demo of SuggestAPI + Claude Commerce Agents**. You shop; SuggestAPI ranks; the on-page tool log is the same `search_products` → `add_to_cart` → checkout contract Anthropic’s shopping agent uses. Claude is not called here — point that agent at `SuggestAPIStorefront` when you want the model in the loop.
+
+Guest mode reads `tests/fixtures.json`. Live catalog:
+
+```bash
+SUGGESTAPI_LIVE=1 SUGGESTAPI_TENANT=your-store.example.com python3 demo/server.py
+```
+
+## Wire into Anthropic's retail demo
 
 ```bash
 git clone https://github.com/anthropics/commerce-agents.git
@@ -34,11 +58,8 @@ backend = SuggestAPIStorefront(tenant="your-store.example.com")
 | `SUGGESTAPI_TENANT` | Merchant domain whose catalog SuggestAPI should search |
 | `SUGGESTAPI_BASE_URL` | SuggestAPI agent API (default `https://agent.suggestapi.com`) |
 | `SUGGESTAPI_API_KEY` | Optional `x-api-key` if your SuggestAPI project requires it |
-| `ANTHROPIC_API_KEY` | Required by Anthropic's demo host, not by `check.py` |
-
-Copy `.env.example` and fill in your values.
-
-A first integration only needs search and product details. The cart in this starter is in-memory for the session so you can try the shopping agent without wiring a storefront cart.
+| `ANTHROPIC_API_KEY` | Required by Anthropic's demo host, not by this starter |
+| `SUGGESTAPI_LIVE` | Set to `1` to skip fixtures in `demo/server.py` |
 
 ## Docs
 

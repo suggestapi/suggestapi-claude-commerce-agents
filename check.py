@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from trace import collect, request, response
 from map_product import (
     apply_client_filters,
     from_minor,
@@ -111,6 +112,13 @@ def main() -> None:
     assert mapped["price"] == 42.0
     assert mapped["category"] == "gifts"
     assert mapped["image_url"] == "https://cdn.example/box.jpg"
+    with collect() as calls:
+        request({"tool": "search_products", "query": "oak"})
+        response([{"product_id": "sku_oak_case"}])
+    assert calls[0]["kind"] == "request"
+    assert calls[0]["payload"]["query"] == "oak"
+    assert calls[1]["payload"][0]["product_id"] == "sku_oak_case"
+
     print("ok")
 
 
