@@ -6,6 +6,8 @@ Claude Commerce already calls `search_products` and `get_product_details`. This 
 
 Checkout stays on the merchant storefront. SuggestAPI does not take payment.
 
+**Live demo:** https://suggestapi-claude-commerce-agents.onrender.com/
+
 ![Demo of SuggestAPI + Claude Commerce Agents](demo/shopper.png)
 
 ## Run the shopper

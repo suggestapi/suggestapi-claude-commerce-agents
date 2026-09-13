@@ -163,6 +163,15 @@ async def test_harness_search_cart_checkout() -> None:
     assert added["cart"]["subtotal"] == 189.0
 
     step(
+        "remove_from_cart",
+        do="remove sku_oak_case, then add it back",
+        expect="cart empty after remove; one line after add",
+    )
+    removed = await run_turn(store, ctx, "remove sku_oak_case")
+    assert removed["cart"]["item_count"] == 0
+    await run_turn(store, ctx, "add sku_oak_case")
+
+    step(
         "checkout",
         do="handoff the session cart to merchant checkout",
         expect="continue_url /checkout?items=sku_oak_case:1, not a payment capture",

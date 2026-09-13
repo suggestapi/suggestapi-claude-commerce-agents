@@ -55,6 +55,27 @@ async def run_turn(
             "handoffs": [{"url": item.url, "label": item.label} for item in handoffs],
         }
 
+    if lowered in {"clear cart", "clear", "empty cart"}:
+        cart = await backend.clear_cart(session)
+        return {
+            "action": "clear_cart",
+            "reply": "Cart emptied.",
+            "products": [],
+            "cart": dump_cart(cart),
+            "handoffs": [],
+        }
+
+    if lowered.startswith("remove "):
+        product_id = text.split(None, 1)[1].strip()
+        cart = await backend.remove_from_cart(session, product_id)
+        return {
+            "action": "remove_from_cart",
+            "reply": f"Removed {product_id} from the cart.",
+            "products": [],
+            "cart": dump_cart(cart),
+            "handoffs": [],
+        }
+
     if lowered.startswith("add "):
         product_id = text.split(None, 1)[1].strip()
         try:

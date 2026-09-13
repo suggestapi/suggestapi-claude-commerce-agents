@@ -257,8 +257,18 @@ class SuggestAPIStorefront(StorefrontBackend):
         return self._cart(session.session_id)
 
     async def remove_from_cart(self, session: ShoppingSessionContext, product_id: str) -> Cart:
+        request({"tool": "remove_from_cart", "product_id": product_id})
         self._carts.setdefault(session.session_id, {}).pop(product_id, None)
-        return self._cart(session.session_id)
+        cart = self._cart(session.session_id)
+        response(cart)
+        return cart
+
+    async def clear_cart(self, session: ShoppingSessionContext) -> Cart:
+        request({"tool": "clear_cart"})
+        self._carts[session.session_id] = {}
+        cart = self._cart(session.session_id)
+        response(cart)
+        return cart
 
     async def get_preferences(self, session: ShoppingSessionContext) -> UserPreferences:
         return UserPreferences(user_id=session.user_id, display_name=None)

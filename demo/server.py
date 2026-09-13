@@ -70,6 +70,7 @@ def checkout_page(items_param: str) -> bytes:
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Merchant checkout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
